@@ -16,7 +16,7 @@ setup(
     description="Allows you to compute taxes",
     license="MIT",
     keywords="tax",
-    url="",
+    url="https://github.com/Koldar/tax-calculator",
     packages=find_packages(),
     long_description=read('README.md'),
     long_description_content_type="text/markdown",
