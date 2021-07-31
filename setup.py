@@ -33,6 +33,8 @@ class PushTagCommand(Command):
 
         repo = Repo(".")
         git = repo.git
+        git.add(f"*")
+        git.commit(m="Automatic commit")
         git.tag(f"v{version}", annotate=True, m="New release of the software")
         git.push(tags=True)
 
