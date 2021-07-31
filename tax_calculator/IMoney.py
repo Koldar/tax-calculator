@@ -1,4 +1,6 @@
 import abc
+import math
+from typing import Union
 
 
 class IMoney(abc.ABC):
@@ -6,8 +8,31 @@ class IMoney(abc.ABC):
     def __init__(self, value: float = 0.0):
         self._value = value
 
+    @classmethod
+    def parse(cls, val: Union[str, float]) -> "IMoney":
+        """
+
+        :param val: something like "5.3€".
+        :return:
+        """
+        if isinstance(val, float):
+            return Euro(val)
+
+        val = val.strip()
+        try:
+            # pure numeric strings re interpreted as euros
+            return Euro(float(val))
+        except ValueError:
+            for money in MONEYS:
+                if val[-1] == money.symbol():
+                    return money(float(val[:-1]))
+            else:
+                raise ValueError(f"Cannot decide which money this represents")
+
+
+    @classmethod
     @abc.abstractmethod
-    def symbol(self) -> str:
+    def symbol(cls) -> str:
         pass
 
     @property
@@ -108,25 +133,30 @@ class IMoney(abc.ABC):
 
     def __eq__(self, other) -> bool:
         if isinstance(other, IMoney):
-            return self._value == other.to(type(self))._value
+            return math.isclose(self._value, other.to(type(self))._value, rel_tol=1e-3)
         else:
-            return self._value == float(other)
+            return math.isclose(self._value, float(other), rel_tol=1e-3)
 
     def __ne__(self, other) -> bool:
         if isinstance(other, IMoney):
-            return self._value != other.to(type(self))._value
+            return not math.isclose(self._value, other.to(type(self))._value, rel_tol=1e-3)
         else:
-            return self._value != float(other)
+            return not math.isclose(self._value, float(other), rel_tol=1e-3)
 
     def __str__(self):
-        return f"{self._value:.2f}{self.symbol()}"
+        return f"{self._value:.2f}{type(self).symbol()}"
+
+    def __repr__(self):
+        return f"{self._value:.5f}{type(self).symbol()}"
 
     def __format__(self, format_spec):
         return format(self._value, format_spec)
 
 
 class Euro(IMoney):
-    def symbol(self) -> str:
+
+    @classmethod
+    def symbol(cls) -> str:
         return "€"
 
     def one_euro_equals_to(self) -> float:
@@ -140,8 +170,16 @@ class Euro(IMoney):
 
 
 class Dollar(IMoney):
-    def symbol(self) -> str:
+
+    @classmethod
+    def symbol(cls) -> str:
         return "$"
 
     def one_euro_equals_to(self) -> float:
         return 1.18
+
+
+MONEYS = [
+    Euro,
+    Dollar
+]

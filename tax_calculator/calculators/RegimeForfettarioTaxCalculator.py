@@ -78,9 +78,9 @@ class RegimeForfettarioTaxCalculator(ITaxCalculator[RegimeForfettarioTaxContext,
         result = super().get_summary(input, output)
 
         result["specific"] = {}
-        result["specific"]["ricavi lordi"] = str(output.ricavi)
-        result["specific"]["ricavi netti"] = str(output.ricavi_netti)
-        result["specific"]["tasse annuali da pagare"] = str(output.tax_to_pay)
+        result["specific"]["ricavi lordi"] = output.ricavi
+        result["specific"]["ricavi netti"] = output.ricavi_netti
+        result["specific"]["tasse annuali da pagare"] = output.tax_to_pay
         result["specific"]["rapporto tasse su ricavi"] = f"{output.tax_over_ricavi_ratio * 100.0:2f}%"
 
         return result
