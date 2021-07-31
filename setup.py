@@ -1,13 +1,53 @@
+import abc
 import os
+import sys
 from pathlib import Path
 
 from semantic_version import Version
-from setuptools import setup, find_packages, Command
+from setuptools import setup, find_packages, Command, Distribution
 
 from tax_calculator import version
 
 
-class AbstractHandleVersion(Command):
+class NoopDistribution(Distribution):
+    pass
+
+
+class PushTagCommand(Command):
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        # do nothing. The command action is invoked at the beginning of the setup script
+        from git import Repo
+
+        cmd = IncreasePatchVersion(NoopDistribution())
+        version_file = cmd._get_file_version()
+        version = cmd._read_version(version_file)
+
+        repo = Repo(".")
+        git = repo.git
+        git.tag(f"v{version}", annotate=True, m="New release of the software")
+        git.push(tags=True)
+
+
+class AbstractHandleVersion(Command, abc.ABC):
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        # do nothing. The command action is invoked at the beginning of the setup script
+        pass
 
     def _get_file_version(self) -> str:
         for dirpath, dnames, fnames in os.walk("./"):
@@ -36,6 +76,10 @@ class AbstractHandleVersion(Command):
         with open(filename, mode="w", encoding="utf8") as f:
             f.write(f"VERSION = \"{version}\"")
 
+    @abc.abstractmethod
+    def update_version(self) -> str:
+        pass
+
 
 class IncreasePatchVersion(AbstractHandleVersion):
     """
@@ -45,19 +89,14 @@ class IncreasePatchVersion(AbstractHandleVersion):
     """
     user_options = []
 
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
+    def update_version(self) -> str:
         version_file = self._get_file_version()
         current_version = self._read_version(version_file)
         next_version = current_version.next_patch()
         print(f"version file={version_file} current={current_version} next={next_version}")
         self._write_version(version_file, next_version)
         print(f"done updating version file {version_file}")
+        return str(next_version)
 
 
 class IncreaseMinorVersion(AbstractHandleVersion):
@@ -68,19 +107,14 @@ class IncreaseMinorVersion(AbstractHandleVersion):
     """
     user_options = []
 
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
+    def update_version(self) -> str:
         version_file = self._get_file_version()
         current_version = self._read_version(version_file)
         next_version = current_version.next_minor()
         print(f"version file={version_file} current={current_version} next={next_version}")
         self._write_version(version_file, next_version)
         print(f"done updating version file {version_file}")
+        return str(next_version)
 
 
 class IncreaseMajorVersion(AbstractHandleVersion):
@@ -91,28 +125,34 @@ class IncreaseMajorVersion(AbstractHandleVersion):
     """
     user_options = []
 
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
+    def update_version(self) -> str:
         version_file = self._get_file_version()
         current_version = self._read_version(version_file)
         next_version = current_version.next_major()
         print(f"version file={version_file} current={current_version} next={next_version}")
         self._write_version(version_file, next_version)
         print(f"done updating version file {version_file}")
+        return str(next_version)
 
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
+def handle_version() -> str:
+    if "update_version_patch" in sys.argv:
+        return IncreasePatchVersion(dist=NoopDistribution()).update_version()
+    elif "update_version_minor" in sys.argv:
+        return IncreaseMinorVersion(dist=NoopDistribution()).update_version()
+    elif "update_version_major" in sys.argv:
+        return IncreaseMajorVersion(dist=NoopDistribution()).update_version()
+    else:
+        return version.VERSION
+
+
 setup(
     name="tax-calculator",
-    version=version.VERSION,
+    version=handle_version(),
     author="Massimo Bono",
     author_email="massimobono1@gmail.com",
     description="Allows you to compute taxes",
@@ -153,5 +193,6 @@ setup(
         'update_version_patch': IncreasePatchVersion,
         'update_version_minor': IncreaseMinorVersion,
         'update_version_major': IncreaseMajorVersion,
+        'push_tag': PushTagCommand,
     },
 )
