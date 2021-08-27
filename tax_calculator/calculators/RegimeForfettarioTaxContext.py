@@ -1,3 +1,5 @@
+from typing import Optional
+
 from tax_calculator.ITaxContext import StandardTaxContext
 from tax_calculator.calculators.CodiceAteco import CodiceAteco
 
@@ -7,8 +9,8 @@ class RegimeForfettarioTaxContext(StandardTaxContext):
     def __init__(self):
         super().__init__()
 
-        self.codice_ateco: CodiceAteco = None
-        self.coefficiente_di_redditivita_percentage: float = None
+        self.codice_ateco: Optional[CodiceAteco] = None
+        self.coefficiente_di_redditivita_percentage: Optional[float] = None
         self.ricavi_money: float = None
         self.contributi_previdenziali_anno_scorso_money: float = None
         self.aliquota_imposta_sostitutiva_percentage: float = None

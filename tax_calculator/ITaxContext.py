@@ -1,6 +1,9 @@
 import abc
+import logging
 from typing import Dict
 
+import inspect
+import typing
 import stringcase
 from datetime import datetime
 
@@ -24,7 +27,8 @@ class ITaxContext(abc.ABC):
     def check(self):
         for key in self.__dict__:
             if self.__dict__[key] is None:
-                raise ValueError(f"required value \"{key}\" is set to None!")
+                logging.info(f"value \"{key}\" is set to None. Skipping it")
+                continue
             value = self.__dict__[key]
             if key.endswith("percentage"):
                 if not isinstance(value, float):
