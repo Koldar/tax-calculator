@@ -53,7 +53,10 @@ class RegimeForfettarioTaxCalculator(ITaxCalculator[RegimeForfettarioTaxContext,
     def calculate(self, context: RegimeForfettarioTaxContext) -> AbstractTaxOutput:
         super().calculate(context)
 
-        coefficiente_di_redditivita = self.get_coefficiente_di_reddittivita(context.codice_ateco)
+        if context.coefficiente_di_redditivita_percentage is None:
+            coefficiente_di_redditivita = self.get_coefficiente_di_reddittivita(context.codice_ateco)
+        else:
+            coefficiente_di_redditivita = float(context.coefficiente_di_redditivita_percentage)
         percentuale_tasse_dovute = 1.0 - coefficiente_di_redditivita
         spese_forfettarie = context.ricavi_money * percentuale_tasse_dovute
 

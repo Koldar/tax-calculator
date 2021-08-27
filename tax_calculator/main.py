@@ -36,7 +36,9 @@ def parse_args(args):
         se una fattura non è stata ancora riscossa, non inserirla!
     """)
     forfettario.add_argument("--contributi_previdenziali_anno_scorso", type=str, default=0.0, help="""Number of euro you have paid the last year for INPS""")
-    forfettario.add_argument("--ateco", type=str, default="62.02.00", help="""Your codice ateco""")
+    forfettario.add_argument("--ateco", type=str, default="62.02.00", required=False, help="""Your codice ateco""")
+    forfettario.add_argument("--coefficiente_di_redditivita", type=float, required=False, help="""The coefficiente of redditivtà of you ateco code. 
+        Mutually exclusive with ateco flag. Useful if you don't know your ateco but you know your coefficiente di redditività""")
     forfettario.add_argument("--aliquota_imposta_sostitutiva", type=float, default=0.05, help="""Percentage of imposta sostitutiva (e.g. 0.05). By default is the forfettario agevolato""")
     forfettario.add_argument("--contributi_previdenziali", type=float, default=0.2572,
                              help="""Percentage of tax you nee dto pay to the contributi previdenziali (e.g. 0.25). By default
@@ -55,6 +57,7 @@ def forfettario_handler(args):
     tax_context.contributi_previdenziali_percentage = args.contributi_previdenziali  # gestione separata INPS: 0.2572
     tax_context.aliquota_imposta_sostitutiva_percentage = args.aliquota_imposta_sostitutiva  # aliquota iva agevolata: 0.05
     tax_context.codice_ateco = CodiceAteco.parse(args.ateco)  # 62.02.00
+    tax_context.coefficiente_di_redditivita = args.coefficiente_di_redditivita
 
     tax_output = tax_calculator.calculate(tax_context)
     summary = tax_calculator.get_summary(tax_context, tax_output)
