@@ -63,16 +63,17 @@ class RegimeForfettarioTaxCalculator(ITaxCalculator[RegimeForfettarioTaxContext,
         # il coefficiente di reddività viene applicato ai ricavi incassati in un anno
         # se emetti fattuea ma il cliente non ti paga, tale somma non dovrà essere considerata nei ricavi
         ricavi_effettuati = context.ricavi_money
+        reddito_lordo = ricavi_effettuati
 
         reddito_imponibile_lordo = ricavi_effettuati * coefficiente_di_redditivita
         reddito_imponibile_netto = reddito_imponibile_lordo - context.contributi_previdenziali_anno_scorso_money
 
         contributi_gestione_inps = reddito_imponibile_lordo * context.contributi_previdenziali_percentage
-        applicazione_aliquota_imposta_sostitutiva = reddito_imponibile_netto * context.aliquota_imposta_sostitutiva_percentage
+        tasse_allo_stato_dovute = reddito_imponibile_netto * context.aliquota_imposta_sostitutiva_percentage
 
         return StandardTaxOutput(
             created_at=arrow.utcnow(),
-            tax_to_pay=applicazione_aliquota_imposta_sostitutiva + contributi_gestione_inps,
+            tax_to_pay=tasse_allo_stato_dovute + contributi_gestione_inps,
             ricavi=context.ricavi_money,
             **{k:v for k, v in locals().items() if k not in "self"}
         )
