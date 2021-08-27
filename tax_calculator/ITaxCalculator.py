@@ -39,7 +39,9 @@ class ITaxCalculator(Generic[TTAXCONTEXT, TTAXOUTPUT], abc.ABC):
         for k, v in input.get_tax_variables().items():
             result["input"][k] = v
         result["output"] = {}
-        for k, v in input.get_tax_variables().items():
+        for k, v in output.get_tax_variables().items():
+            if k in "context":
+                continue
             result["output"][k] = v
         return result
 
