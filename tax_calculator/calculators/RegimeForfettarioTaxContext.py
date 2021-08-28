@@ -1,13 +1,15 @@
 from typing import Optional
 
+from arrow import Arrow
+
 from tax_calculator.ITaxContext import StandardTaxContext
 from tax_calculator.calculators.CodiceAteco import CodiceAteco
 
 
 class RegimeForfettarioTaxContext(StandardTaxContext):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, time_to_consider: Arrow, start_date: Arrow, end_date: Arrow):
+        super().__init__(time_to_consider, start_date, end_date)
 
         self.codice_ateco: Optional[CodiceAteco] = None
         self.coefficiente_di_redditivita_percentage: Optional[float] = None

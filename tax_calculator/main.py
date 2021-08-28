@@ -5,6 +5,9 @@ import sys
 
 import argparse
 
+import arrow
+from arrow import Arrow
+
 from tax_calculator import version
 from tax_calculator.IMoney import Euro, IMoney
 from tax_calculator.ITaxCalculator import ITaxCalculator
@@ -31,6 +34,14 @@ def parse_args(args):
     subparsers = parser.add_subparsers()
     forfettario = subparsers.add_parser('compute-forfettario')
 
+    forfettario.add_argument("--start_date", type=str, required=False, default=None, help="""
+        The month (included) where you have started making money. If absent, we will consider the first of january of this year.
+        Follows ISo8601 date format. For instance: 2021-07-01
+    """)
+    forfettario.add_argument("--end_date", type=str, required=False, default=None, help="""
+        The month (included) where you have ended making money. If absent, we will consider today.
+        Follows ISo8601 date format. For instance: 2021-07-01
+    """)
     forfettario.add_argument("--ricavi", type=str, required=True, help="""
         How much money do you have actually enjoyed?
         se una fattura non è stata ancora riscossa, non inserirla!
@@ -45,13 +56,26 @@ def parse_args(args):
                              they are the ones from the INPS""")
     forfettario.set_defaults(func=forfettario_handler)
 
+    result = parser.parse_args(args)
+
+    # if result.start_date is None:
+    #     result.start_date = arrow.utcnow().replace(day=1, month=1)
+    # if result.end_date is None:
+    #     result.end_date = arrow.utcnow()
+
     return parser.parse_args(args)
 
 
 def forfettario_handler(args):
     tax_calculator = RegimeForfettarioTaxCalculator()
-    tax_context = RegimeForfettarioTaxContext()
+    tax_context = RegimeForfettarioTaxContext(
+        time_to_consider=Arrow.utcnow(),
+        start_date=None,
+        end_date=None,
+    )
 
+    tax_context.start_date = arrow.get(args.start_date) if args.start_date is not None else Arrow.utcnow().replace(day=1, month=1)
+    tax_context.end_date = arrow.get(args.end_date) if args.end_date is not None else Arrow.utcnow()
     tax_context.ricavi_money = IMoney.parse(args.ricavi)
     tax_context.contributi_previdenziali_anno_scorso_money = IMoney.parse(args.contributi_previdenziali_anno_scorso)
     tax_context.contributi_previdenziali_percentage = float(args.contributi_previdenziali)  # gestione separata INPS: 0.2572

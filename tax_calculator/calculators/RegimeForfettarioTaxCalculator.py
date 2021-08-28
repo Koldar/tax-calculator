@@ -58,7 +58,6 @@ class RegimeForfettarioTaxCalculator(ITaxCalculator[RegimeForfettarioTaxContext,
         else:
             coefficiente_di_redditivita = float(context.coefficiente_di_redditivita_percentage)
         percentuale_tasse_dovute = 1.0 - coefficiente_di_redditivita
-        # spese_forfettarie = context.ricavi_money * percentuale_tasse_dovute
 
         # il coefficiente di reddività viene applicato ai ricavi incassati in un anno
         # se emetti fattuea ma il cliente non ti paga, tale somma non dovrà essere considerata nei ricavi
@@ -68,23 +67,27 @@ class RegimeForfettarioTaxCalculator(ITaxCalculator[RegimeForfettarioTaxContext,
         reddito_imponibile_netto = reddito_imponibile_lordo - context.contributi_previdenziali_anno_scorso_money
 
         contributi_gestione_inps = reddito_imponibile_lordo * context.contributi_previdenziali_percentage
-        contrributi_tasse = reddito_imponibile_netto * context.aliquota_imposta_sostitutiva_percentage
+        contributi_tasse = reddito_imponibile_netto * context.aliquota_imposta_sostitutiva_percentage
 
         return StandardTaxOutput(
             created_at=arrow.utcnow(),
-            tax_to_pay=contrributi_tasse + contributi_gestione_inps,
-            ricavi=context.ricavi_money,
-            **{k:v for k, v in locals().items() if k not in "self"}
+            tax_to_pay=contributi_tasse + contributi_gestione_inps,
+            ricavi_lordi=context.ricavi_money,
+            **{k: v for k, v in locals().items() if k not in "self"}
         )
 
     def get_summary(self, input: RegimeForfettarioTaxContext, output: StandardTaxOutput) -> Json:
         result = super().get_summary(input, output)
 
         result["specific"] = {}
-        result["specific"]["ricavi lordi"] = output.ricavi
+        result["specific"]["ricavi lordi"] = output.ricavi_lordi
         result["specific"]["ricavi netti"] = output.ricavi_netti
         result["specific"]["tasse annuali da pagare"] = output.tax_to_pay
         result["specific"]["rapporto tasse su ricavi"] = f"{output.tax_over_ricavi_ratio * 100.0:2f}%"
+        # we assume each month has 30 days
+        result["specific"]["ricavi lordi mensile"] = output.ricavi_lordi/(input.months_passed())
+        result["specific"]["ricavi netti mensile"] = output.ricavi_netti / (input.months_passed())
+        result["specific"]["tasse mensili da pagare"] = output.tax_to_pay / (input.months_passed())
 
         return result
 

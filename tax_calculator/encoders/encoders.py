@@ -4,6 +4,7 @@ from typing import Any
 
 from arrow import Arrow
 
+from tax_calculator.IMoney import IMoney
 from tax_calculator.calculators.CodiceAteco import CodiceAteco
 
 
@@ -36,6 +37,15 @@ class CodiceAtecoEncoder(AbstractJSONEncoder):
         return str(obj)
 
 
+class MoneyEncoder(AbstractJSONEncoder):
+
+    def can_manage_object(self, obj) -> bool:
+        return isinstance(obj, IMoney)
+
+    def serialize_object_to_json(self, obj):
+        return f"{obj:.2f}"
+
+
 class GenericEncoder(AbstractJSONEncoder):
 
     def can_manage_object(self, obj) -> bool:
@@ -49,6 +59,7 @@ class MultiplexerEncoder(json.JSONEncoder):
     ENCODERS = [
         ArrowEncoder(),
         CodiceAtecoEncoder(),
+        MoneyEncoder(),
         # put at last
         GenericEncoder()
     ]
